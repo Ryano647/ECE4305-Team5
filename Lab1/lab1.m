@@ -7,6 +7,7 @@ numFrames = 200;
 numSamples = numFrames*frameSize; % Samples to simulate
 modulationOrder = 2;
 filterSymbolSpan = 4;
+rollOff = 0.2; %default 0.2
 
 %% Visuals
 cdPre = comm.ConstellationDiagram('ReferenceConstellation', [-1 1],...
@@ -31,7 +32,8 @@ modulatedData = mod.step(data);
 %% Add TX/RX Filters
 TxFlt = comm.RaisedCosineTransmitFilter(...
     'OutputSamplesPerSymbol', samplesPerSymbol,...
-    'FilterSpanInSymbols', filterSymbolSpan);
+    'FilterSpanInSymbols', filterSymbolSpan,...
+    'RolloffFactor', rollOff);
 
 RxFlt = comm.RaisedCosineReceiveFilter(...
     'InputSamplesPerSymbol', samplesPerSymbol,...
@@ -51,17 +53,15 @@ varDelay = dsp.VariableFractionalDelay;
 
 %% Setup visualization object(s)
 sa = dsp.SpectrumAnalyzer('SampleRate',sampleRateHz,'ShowLegend',true);
-% y = 1:size(data);
-% plot(y(2),data);
 
 %% Model of error
 % Add timing offset to baseband signal
 filteredData = [];
 allFilteredData = [];
+timeIndex;
 for k=1:frameSize:(numSamples - frameSize)
     
     timeIndex = (k:k+frameSize-1).';
-    
     % Filter signal
     filteredTXData = step(TxFlt, modulatedData(timeIndex));
     
@@ -85,6 +85,7 @@ for k=1:frameSize:(numSamples - frameSize)
     
 end
 
+plot(timeIndex, real(allFilteredData(:,1)));
 
 
 
