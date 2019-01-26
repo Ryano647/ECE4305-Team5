@@ -1,10 +1,11 @@
+close all
 
 %% General system details
 sampleRateHz = 1e6; % Sample rate
 samplesPerSymbol = 8;
 frameSize = 2^10;
-numFrames = 200;
-numSamples = numFrames*frameSize; % Samples to simulate
+numFrames = 1;
+numSamples = (numFrames+1)*frameSize; % Samples to simulate
 modulationOrder = 2;
 filterSymbolSpan = 4;
 rollOff = 0.2; %default 0.2
@@ -38,7 +39,8 @@ TxFlt = comm.RaisedCosineTransmitFilter(...
 RxFlt = comm.RaisedCosineReceiveFilter(...
     'InputSamplesPerSymbol', samplesPerSymbol,...
     'FilterSpanInSymbols', filterSymbolSpan,...
-    'DecimationFactor', samplesPerSymbol); % Set to filterUpsample/2 when introducing timing estimation
+    'DecimationFactor', samplesPerSymbol,...
+    'RolloffFactor', rollOff); % Set to filterUpsample/2 when introducing timing estimation
 RxFltRef = clone(RxFlt);
 
 %% Add noise source
@@ -58,7 +60,7 @@ sa = dsp.SpectrumAnalyzer('SampleRate',sampleRateHz,'ShowLegend',true);
 % Add timing offset to baseband signal
 filteredData = [];
 allFilteredData = [];
-timeIndex;
+timeIndex = 0;
 for k=1:frameSize:(numSamples - frameSize)
     
     timeIndex = (k:k+frameSize-1).';
@@ -85,7 +87,13 @@ for k=1:frameSize:(numSamples - frameSize)
     
 end
 
-plot(timeIndex, real(allFilteredData(:,1)));
+timeIndex = timeIndex / (1e6);
+figure
+plot(timeIndex(5:105), real(allFilteredData(5:105)),'-o','MarkerIndices',1:length(allFilteredData(1:100)));
+title('Transmit and Receive Plot')
+xlabel('Time (ms)')
+ylabel('Amplitude')
+
 
 
 
