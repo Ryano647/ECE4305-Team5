@@ -63,6 +63,8 @@ filteredData = [];
 allFilteredDatawoff = [];
 allFilteredData = [];
 %timeIndex = 0;
+cd = comm.ConstellationDiagram;
+ 
 for k=1:frameSize:(numSamples)
     
       disp(k);
@@ -81,6 +83,7 @@ for k=1:frameSize:(numSamples)
     
     % Pass through channel
     noisyData = step(chan, filteredTXData);
+    cd(filteredTXData);
     
     % Time delay signal
     offsetData = step(varDelay, noisyData, k/frameSize*timingOffset); % Variable delay
