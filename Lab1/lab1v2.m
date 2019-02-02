@@ -4,24 +4,24 @@ close all
 sampleRateHz = 1e6; % Sample rate
 samplesPerSymbol = 8;
 frameSize = 8;
-numFrames = 1;
+numFrames = 4;
 numSamples = numFrames*frameSize; % Samples to simulate
 modulationOrder = 2;
 filterSymbolSpan = 4;
 rollOff = 0.2; %default 0.2
 
 %% Visuals
-cdPre = comm.ConstellationDiagram('ReferenceConstellation', [-1 1],...
-    'Name','Baseband');
-cdPost = comm.ConstellationDiagram('ReferenceConstellation', [-1 1],...
-    'SymbolsToDisplaySource','Property',...
-    'SymbolsToDisplay',frameSize/2,...
-    'Name','Baseband with Timing Offset');
-cdPre.Position(1) = 50;
-cdPost.Position(1) = cdPre.Position(1)+cdPre.Position(3)+10;% Place side by side
+% cdPre = comm.ConstellationDiagram('ReferenceConstellation', [-1 1],...
+%     'Name','Baseband');
+% cdPost = comm.ConstellationDiagram('ReferenceConstellation', [-1 1],...
+%     'SymbolsToDisplaySource','Property',...
+%     'SymbolsToDisplay',frameSize/2,...
+%     'Name','Baseband with Timing Offset');
+% cdPre.Position(1) = 50;
+% cdPost.Position(1) = cdPre.Position(1)+cdPre.Position(3)+10;% Place side by side
 
 %% Impairments
-snr = 15;
+snr = 200;
 timingOffset = samplesPerSymbol*0.01; % Samples
 
 %% Generate symbols
@@ -63,11 +63,9 @@ filteredData = [];
 allFilteredDatawoff = [];
 allFilteredData = [];
 %timeIndex = 0;
-cd = comm.ConstellationDiagram;
- 
 for k=1:frameSize:(numSamples)
     
-      disp(k);
+
 %     if k == (25*frameSize+1)
 %         djssd=1;
 %     elseif k == (50*frameSize+1)
@@ -83,7 +81,6 @@ for k=1:frameSize:(numSamples)
     
     % Pass through channel
     noisyData = step(chan, filteredTXData);
-    cd(filteredTXData);
     
     % Time delay signal
     offsetData = step(varDelay, noisyData, k/frameSize*timingOffset); % Variable delay
@@ -95,37 +92,78 @@ for k=1:frameSize:(numSamples)
     if k == 1 
         allFilteredDatawoff= filteredData;
         allFilteredData = filteredDataRef;
+        allFilteredTXData = filteredTXData;
+        allnoisyData = noisyData;
     end
+    if k >1
     allFilteredDatawoff = cat(2,allFilteredDatawoff,filteredData);
     allFilteredData = cat(2,allFilteredData,filteredDataRef);
-    
+    allFilteredTXData = cat(2,allFilteredTXData,filteredTXData);
+    allnoisyData = cat(2,allnoisyData,noisyData);
+    end
     % Visualize Error
-    step(cdPre,filteredDataRef);
-    step(cdPost,filteredData);pause(0.1); 
+%     step(cdPre,filteredDataRef);
+%     step(cdPost,filteredData);pause(0.1); 
     
 end
+
+allFilteredTXData = real(allFilteredTXData);
+allFilteredData = real(allFilteredData);
+allnoisyData = real(allnoisyData);
 
 %% Transmit and Receive Plots
 %By R O'brian
 
- timeIndex = timeIndex / (1e6);
- tas = 1:7/63:8;
- jksd=[];
-for ids= 1:8
-    if ids ==1
-        jksd(1)= real(allFilteredData(1));
-        jksd = [jksd,0,0,0,0,0,0,0];
-    else
-        jksd((8*(ids-1)+1))=real(allFilteredData(ids));
-        jksd = [jksd,0,0,0,0,0,0,0];
-    end  
+timeIndex = timeIndex / (1e6);
+
+
+%Code for creating the correct amountdata points to plot Tx and Rx plots
+%Sean Brady
+
+%Constants
+jksd=[];
+longTx = [];
+longNoise = [];
+%creating a time variable to match the size we need to plot Tx and Rx
+%filtered data
+tas = 1:(numSamples-1)/((frameSize*samplesPerSymbol*numFrames)-1):numSamples;
+
+for ert= 1:numFrames
+    ids = 1;
+    %Getting all of filteredTXData and noisydata in 1 array
+    for yui= 1:(samplesPerSymbol*frameSize)
+        longTx=[longTx, allFilteredTXData(yui,ert)];
+        longNoise = [longNoise, allnoisyData(yui,ert)];
+    end 
+    %creating a array with properly spaced filteredData points to plot with
+    %filterTX data
+    for ids= 1:frameSize
+        hjk = 1;
+        if ids ==1
+            
+            jksd(((ert-1)*frameSize*samplesPerSymbol)+1)...
+                = real(allFilteredData(1,ert));
+            
+            for hjk =1:(samplesPerSymbol-1)
+                jksd = [jksd,0];
+            end
+        else
+            jksd((samplesPerSymbol*(ids-1)+((ert-1)*frameSize*samplesPerSymbol)+1))=real(allFilteredData(ids,ert));
+            hds(ids)=((samplesPerSymbol*(ids-1))+((ert-1)*frameSize*samplesPerSymbol)+1);
+            for hjk =1:(samplesPerSymbol-1)
+                jksd = [jksd,0];
+            end
+        end 
+    end
 end
 
- plot(tas, jksd,'-o','MarkerIndices',1:length(jksd));
+
+
+ stem(tas, jksd);
  hold on;
- plot(tas, filteredTXData,'-o','MarkerIndices',1:length(filteredTXData));
+ plot(tas, longTx,'-o','MarkerIndices',1:length(filteredTXData));
  hold on;
- plot(tas, noisyData,'-o','MarkerIndices',1:length(noisyData));
+ plot(tas, longNoise,'-o','MarkerIndices',1:length(noisyData));
  hold off;
  title('Transmit and Receive Plot')
  xlabel('Time (ms)')
