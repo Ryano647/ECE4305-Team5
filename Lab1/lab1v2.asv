@@ -139,7 +139,7 @@ longNoise = [];
 tas = 1:(numSamples-1)/((frameSize*samplesPerSymbol*numFrames)-1):numSamples;
 
 for Frame_iterator= 1:numFrames
-    Symbols_in_frame_iterator = 1;
+    Sample_in_frame_iterator = 1;
     %Getting all of filteredTXData and noisydata in 1 array
     for All_sample_iterator= 1:(samplesPerSymbol*frameSize)
         longTx=[longTx, allFilteredTXData(All_sample_iterator,Frame_iterator)];
@@ -147,28 +147,27 @@ for Frame_iterator= 1:numFrames
     end 
     %creating a array with properly spaced filteredData points to plot with
     %filterTX data
-    for Symbols_in_frame_iterator= 1:frameSize
+    for Sample_in_frame_iterator= 1:frameSize
         hjk = 1;
-        if Symbols_in_frame_iterator ==1
+        if Sample_in_frame_iterator ==1
+            Spaced_out_transmitted_data(((Frame_iterator-1)*frameSize*samplesPerSymbol)+1)...
+                = data(Frame_iterator);
             Spaced_out_recieved_data(((Frame_iterator-1)*frameSize*samplesPerSymbol)+1)...
                 = allFilteredData(1,Frame_iterator);
-            Spaced_out_transmitted_data(((Frame_iterator-1)*frameSize*samplesPerSymbol)+1)...
-                = modulatedData(1+(samplesPerSymbol*(Frame_iterator-1)));
-
+            
             for hjk =1:(samplesPerSymbol-1)
                 Spaced_out_recieved_data = [Spaced_out_recieved_data,0];
                 Spaced_out_transmitted_data = [Spaced_out_transmitted_data,0];
             end
         else
-            Spaced_out_recieved_data((samplesPerSymbol*(Symbols_in_frame_iterator-1)+...
+            Spaced_out_recieved_data((samplesPerSymbol*(Sample_in_frame_iterator-1)+...
                 ((Frame_iterator-1)*frameSize*samplesPerSymbol)+1))...
-                = allFilteredData(Symbols_in_frame_iterator,Frame_iterator);
-            Spaced_out_transmitted_data((samplesPerSymbol*(Symbols_in_frame_iterator-1)+...
+                = allFilteredData(Sample_in_frame_iterator,Frame_iterator);
+            Spaced_out_transmitted_data((samplesPerSymbol*(Sample_in_frame_iterator-1)+...
                 ((Frame_iterator-1)*frameSize*samplesPerSymbol)+1))...
-                = modulatedData(Symbols_in_frame_iterator+(samplesPerSymbol*(Frame_iterator-1)));
+                = Data(Sample_in_frame_iterator,Frame_iterator);
             for hjk =1:(samplesPerSymbol-1)
                 Spaced_out_recieved_data = [Spaced_out_recieved_data,0];
-                Spaced_out_transmitted_data = [Spaced_out_transmitted_data,0];
             end
         end 
     end
