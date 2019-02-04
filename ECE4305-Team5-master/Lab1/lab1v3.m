@@ -33,7 +33,7 @@ modulatedData = mod.step(data);
 TxFlt = comm.RaisedCosineTransmitFilter(...
     'OutputSamplesPerSymbol', samplesPerSymbol,...
     'FilterSpanInSymbols', filterSymbolSpan);
-comm
+% comm
 
 RxFlt = comm.RaisedCosineReceiveFilter(...
     'InputSamplesPerSymbol', samplesPerSymbol,...
@@ -71,7 +71,7 @@ for k=1:frameSize:(numSamples)
     downsampledRxData = [];
 %     timeIndex = (k:k+frameSize-1).';
 
-      for timeIndex = k:k+frameSize-1
+  for timeIndex = k:k+frameSize-1
     
     % Filter signal Note* Size=frameSize*SamplesPerSymbol
     filteredTXData = step(TxFlt, modulatedData(timeIndex));
@@ -91,17 +91,17 @@ for k=1:frameSize:(numSamples)
     
 
     
-    %PLL
+%PLL
     %by Sean Brady
     
     %TED
     newdata = filteredData(1);
     if do ==1
-    error_sig = real(zC+pShift)...
-        *(sign(real(olddata+pShift))-sign(real(...
-        newdata+pShift)))+ imag(zC+pShift)...
-        *(sign(imag(olddata+pShift))-sign(imag(...
-        newdata+pShift)));
+        error_sig = real(zC+pShift)...
+            *(sign(real(olddata+pShift))-sign(real(...
+            newdata+pShift)))+ imag(zC+pShift)...
+            *(sign(imag(olddata+pShift))-sign(imag(...
+            newdata+pShift)));
     end
     olddata = newdata;
     zC= filteredData(1+(samplesPerSymbol-1)/2);
@@ -124,7 +124,7 @@ for k=1:frameSize:(numSamples)
 %     demodulatedData = demod.step(downsampledRxData');
 %     allDemodulatedData = [allDemodulatedData,demodulatedData];
     
-      end
+  end
     
     % Visualize Error
 %     step(cdPre,filteredDataRef);
