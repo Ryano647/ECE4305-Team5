@@ -1,7 +1,7 @@
 %% Modulation Setup 
 amps = [-7, -5, -3, -1, 1, 3, 5, 7];
 symb = [000, 001, 010, 011, 111, 110, 100, 101];
-msgLength = 2048; %Must be divisible by 3
+msgLength = 1024; %Must be divisible by 3
 symMap = containers.Map(symb,amps);
 
 % Creates array of 3-bit symbols 
