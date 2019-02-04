@@ -105,36 +105,47 @@ for k=1:frameSize:(numSamples)
     
 end
 
-%% EVM Measurement
-evm = comm.EVM;
-%[rmsEVM,maxEVM,pctEVM,numSym] = evm(RxFltRef,RxFlt)
-rmsEVM = evm(filteredDataRef,allFilteredData)
-
 %% Transmit and Receive Plots
 
  timeIndex = timeIndex / (1e6);
- tas = 1:7/63:8;
- jksd=[];
-for ids= 1:8
-    if ids ==1
-        jksd(1)= real(allFilteredData(1));
-        jksd = [jksd,0,0,0,0,0,0,0];
-    else
-        jksd((8*(ids-1)+1))=real(allFilteredData(ids));
-        jksd = [jksd,0,0,0,0,0,0,0];
-    end  
+ tas = 1:(numSamples-1)/((frameSize*samplesPerSymbol)-1):numSamples;
+jksd=[];
+for ert= 1:numFrames
+    ids = 1;
+    for ids= 1:frameSize
+        hjk = 1;
+        if ids ==1
+            jksd(((ert-1)*frameSize*samplesPerSymbol)+1)= real(allFilteredData(1,ert+1));
+            for hjk =1:(samplesPerSymbol-1)
+                jksd = [jksd,0];
+            end
+        else
+            jksd((samplesPerSymbol*(ids-1)+((ert-1)*frameSize*samplesPerSymbol)+1))=real(allFilteredData(ids,ert+1));
+            hds(ids)=((samplesPerSymbol*(ids-1))+((ert-1)*frameSize*samplesPerSymbol)+1);
+            for hjk =1:(samplesPerSymbol-1)
+                %
+                jksd = [jksd,0];
+            end
+        end 
+    end
 end
 
- plot(tas, jksd,'-o','MarkerIndices',1:length(jksd));
- hold on;
- plot(tas, filteredTXData,'-o','MarkerIndices',1:length(filteredTXData));
- hold on;
- plot(tas, noisyData,'-o','MarkerIndices',1:length(noisyData));
- hold off;
- title('Transmit and Receive Plot')
- xlabel('Time (ms)')
- ylabel('Amplitude')
+%  plot(tas, jksd,'-o','MarkerIndices',1:length(jksd));
+%  hold on;
+%  plot(tas, filteredTXData,'-o','MarkerIndices',1:length(filteredTXData));
+%  hold on;
+%  plot(tas, noisyData,'-o','MarkerIndices',1:length(noisyData));
+%  hold off;
+%  title('Transmit and Receive Plot')
+%  xlabel('Time (ms)')
+%  ylabel('Amplitude')
 
+
+%% EVM Measurement
+evm = comm.EVM('MaximumEVMOutputPort',true,...
+    'XPercentileEVMOutputPort',true, 'XPercentileValue',90);
+[rmsEVM,maxEVM,pctEVM] = evm(filteredDataRef,filteredData)
+% rmsEM = evm(tas,jksd)
 
 
 
