@@ -3,7 +3,7 @@
 sampleRateHz = 1e6; % Sample rate
 samplesPerSymbol = 8;
 frameSize = 8;
-numFrames = 7;
+numFrames = 50;
 numSamples = numFrames*frameSize; % Samples to simulate
 modulationOrder = 2;
 filterSymbolSpan = 4;
@@ -19,7 +19,7 @@ cdPre.Position(1) = 50;
 cdPost.Position(1) = cdPre.Position(1)+cdPre.Position(3)+10;% Place side by side
 
 %% Impairments
-snr = 2000;
+snr = 5;
 timingOffset = samplesPerSymbol*0.01; % Samples
 
 %% Generate symbols

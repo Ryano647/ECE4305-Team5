@@ -15,10 +15,6 @@ cdPost = comm.ConstellationDiagram('ReferenceConstellation', [-1 1],...
     'SymbolsToDisplaySource','Property',...
     'SymbolsToDisplay',frameSize/2,...
     'Name','Baseband with Timing Offset');
-cdPLL = comm.ConstellationDiagram('ReferenceConstellation', [-1 1],...
-    'SymbolsToDisplaySource','Property',...
-    'SymbolsToDisplay',frameSize/2,...
-    'Name','Baseband with Timing Offset after PLL');
 cdPre.Position(1) = 50;
 cdPost.Position(1) = cdPre.Position(1)+cdPre.Position(3)+10;% Place side by side
 
@@ -58,14 +54,6 @@ sa = dsp.SpectrumAnalyzer('SampleRate',sampleRateHz,'ShowLegend',true);
 %% Model of error
 % Add timing offset to baseband signal
 filteredData = [];
-pllData = [];
-
-pll = comm.SymbolSynchronizer(...
-    'SamplesPerSymbol',samplesPerSymbol, ...
-    'NormalizedLoopBandwidth',0.01, ...
-    'DampingFactor',1.0, ...
-    'TimingErrorDetector','Zero-Crossing (decision-directed)');
-
 
 for k=1:frameSize:(numSamples)
     
@@ -80,16 +68,12 @@ for k=1:frameSize:(numSamples)
     % Time delay signal
     offsetData = step(varDelay, noisyData, k/frameSize*timingOffset); % Variable delay
     
-    release(pll);
     % Filter signal
     filteredData = step(RxFlt, offsetData);
     filteredDataRef = real(step(RxFltRef, noisyData));
-    pllData = pll(filteredData);
-    
     
     % Visualize Error
     step(cdPre,filteredDataRef);
-    step(cdPost,filteredData);
-    step(cdPLL,pllData);
-    pause(0.1); 
+    step(cdPost,filteredData);pause(0.1); 
+    
 end

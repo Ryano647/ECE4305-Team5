@@ -63,7 +63,7 @@ filteredData = [];
 allFilteredDatawoff = [];
 allFilteredData = [];
 %timeIndex = 0;
-% cd = comm.ConstellationDiagram;
+cd = comm.ConstellationDiagram;
  
 for k=1:frameSize:(numSamples)
     
@@ -130,15 +130,15 @@ for ert= 1:numFrames
     end
 end
 
-%  plot(tas, jksd,'-o','MarkerIndices',1:length(jksd));
-%  hold on;
-%  plot(tas, filteredTXData,'-o','MarkerIndices',1:length(filteredTXData));
-%  hold on;
-%  plot(tas, noisyData,'-o','MarkerIndices',1:length(noisyData));
-%  hold off;
-%  title('Transmit and Receive Plot')
-%  xlabel('Time (ms)')
-%  ylabel('Amplitude')
+ plot(tas, jksd,'-o','MarkerIndices',1:length(jksd));
+ hold on;
+ plot(tas, filteredTXData,'-o','MarkerIndices',1:length(filteredTXData));
+ hold on;
+ plot(tas, noisyData,'-o','MarkerIndices',1:length(noisyData));
+ hold off;
+ title('Transmit and Receive Plot')
+ xlabel('Time (ms)')
+ ylabel('Amplitude')
 
 
 %% EVM Measurement

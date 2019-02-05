@@ -31,7 +31,7 @@ sine = dsp.SineWave('Frequency',300,...
 qpsk = QPSKTransmitter('DataLength',200);
 
 
-tx.transmitRepeat(signal); % Transmit continuously
+tx.transmitRepeat(qpsk); % Transmit continuously
 
 %% Setup Scope
 samplesPerStep = rx.SamplesPerFrame/rx.BasebandSampleRate;
