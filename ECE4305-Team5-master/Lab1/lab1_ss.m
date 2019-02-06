@@ -3,7 +3,7 @@
 sampleRateHz = 1e6; % Sample rate
 samplesPerSymbol = 8;
 frameSize = 2^10;
-numFrames = 200;
+numFrames = 50;
 numSamples = numFrames*frameSize; % Samples to simulate
 modulationOrder = 2;
 filterSymbolSpan = 4;
@@ -67,6 +67,11 @@ pll = comm.SymbolSynchronizer(...
     'DetectorGain', 10, ...
     'TimingErrorDetector', 'Zero-Crossing (decision-directed)');
 
+evm = comm.EVM('MaximumEVMOutputPort',true,...
+    'XPercentileEVMOutputPort',true, 'XPercentileValue',90); % should have a reference constellation... 
+% rmsEVM = [];
+% maxEVM = [];
+% pctEVM = [];
 
 for k=1:frameSize:(numSamples)
     
@@ -85,12 +90,19 @@ for k=1:frameSize:(numSamples)
     % Filter signal
     filteredData = step(RxFlt, offsetData);
     filteredDataRef = real(step(RxFltRef, noisyData));
-    pllData = pll(filteredData);
+    pllData = pll(step(RxFltRef,noisyData));
     
     
     % Visualize Error
     step(cdPre,filteredDataRef);
     step(cdPost,filteredData);
     step(cdPLL,pllData);
-    pause(0.1); 
+%     pause(0.1); 
+
+    
 end
+
+[rmsEVM_1,maxEVM_1,pctEVM_1] = evm(filteredDataRef,filteredData)
+[rmsEVM_2,maxEVM_2,pctEVM_2] = evm(pllData)
+
+
