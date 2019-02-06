@@ -130,6 +130,7 @@ end
  title('Transmit and Receive Plot')
  xlabel('Time (ms)')
  ylabel('Amplitude')
+ legend({'Transmitted Data','Received Filter Output','Received Data with Noise'},'Location','southwest')
 
 
 

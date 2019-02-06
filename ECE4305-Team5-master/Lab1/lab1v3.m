@@ -76,6 +76,8 @@ for k=1:frameSize:(numSamples)
     % Filter signal Note* Size=frameSize*SamplesPerSymbol
     filteredTXData = step(TxFlt, modulatedData(timeIndex));
     allfilteredTXData = [allfilteredTXData; filteredTXData];
+    release(TxFlt);
+    
     % Pass through channel
     noisyData = step(chan, filteredTXData);
     allnoisyData = [allnoisyData; noisyData];
@@ -141,7 +143,7 @@ end
 %     zFittedTxData(samplesPerSymbol*(w-1)+1) = modulatedData(w+frameSize*(numFrames-1));
 %     zFittedRxData(samplesPerSymbol*(w-1)+1) = allDownsampledRxData(w+frameSize*(numFrames-1));
 % end
-
+% 
 % stem(tas,real(zFittedTxData));
 % hold on;
 % stem(tas,real(zFittedRxData)); %1:length(noisyData) 
