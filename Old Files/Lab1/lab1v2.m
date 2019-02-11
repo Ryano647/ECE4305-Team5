@@ -8,7 +8,7 @@ numFrames = 1;
 numSamples = numFrames*frameSize; % Samples to simulate
 modulationOrder = 2;
 filterSymbolSpan = 4;
-rollOff = 0.2; %default 0.2
+rollOff = 0.1; %default 0.2
 
 %% Visuals
 cdPre = comm.ConstellationDiagram('ReferenceConstellation', [-1 1],...
@@ -100,13 +100,13 @@ for k=1:frameSize:(numSamples)
     allFilteredData = cat(2,allFilteredData,filteredDataRef);
     
     % Visualize Error
-    step(cdPre,filteredDataRef);
-    step(cdPost,filteredData);pause(0.1); 
+%     step(cdPre,filteredDataRef);
+%     step(cdPost,filteredData);pause(0.1); 
     
 end
 
 %% Transmit and Receive Plots
-%By R O'brian
+%By R O'Brien
 
  timeIndex = timeIndex / (1e6);
  tas = 1:7/63:8;
@@ -127,10 +127,10 @@ end
  hold on;
  plot(tas, noisyData,'-o','MarkerIndices',1:length(noisyData));
  hold off;
- title('Transmit and Receive Plot')
+ title('Transmit and Receive Plot Roll-off 0.1')
  xlabel('Time (ms)')
  ylabel('Amplitude')
- legend({'Transmitted Data','Received Filter Output','Received Data with Noise'},'Location','southwest')
+ legend({'Demodulated Data','Received Filter Output','Received Data with Noise'},'Location','southwest')
 
 
 

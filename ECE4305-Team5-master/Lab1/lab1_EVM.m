@@ -11,14 +11,14 @@ filterSymbolSpan = 4;
 rollOff = 0.2; %default 0.2
 
 %% Visuals
-% cdPre = comm.ConstellationDiagram('ReferenceConstellation', [-1 1],...
-%     'Name','Baseband');
-% cdPost = comm.ConstellationDiagram('ReferenceConstellation', [-1 1],...
-%     'SymbolsToDisplaySource','Property',...
-%     'SymbolsToDisplay',frameSize/2,...
-%     'Name','Baseband with Timing Offset');
-% cdPre.Position(1) = 50;
-% cdPost.Position(1) = cdPre.Position(1)+cdPre.Position(3)+10;% Place side by side
+cdPre = comm.ConstellationDiagram('ReferenceConstellation', [-1 1],...
+    'Name','Baseband');
+cdPost = comm.ConstellationDiagram('ReferenceConstellation', [-1 1],...
+    'SymbolsToDisplaySource','Property',...
+    'SymbolsToDisplay',frameSize/2,...
+    'Name','Baseband with Timing Offset');
+cdPre.Position(1) = 50;
+cdPost.Position(1) = cdPre.Position(1)+cdPre.Position(3)+10;% Place side by side
 
 %% Impairments
 snr = 15;
@@ -139,7 +139,6 @@ end
  title('Transmit and Receive Plot')
  xlabel('Time (ms)')
  ylabel('Amplitude')
-
 
 %% EVM Measurement
 evm = comm.EVM('MaximumEVMOutputPort',true,...

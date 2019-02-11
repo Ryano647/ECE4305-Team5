@@ -24,7 +24,7 @@ cdPost.Position(1) = cdPre.Position(1)+cdPre.Position(3)+10;% Place side by side
 cdPLL.Position(1) = cdPost.Position(1)+cdPost.Position(3)+10;
 %% Impairments
 snr = 15;
-timingOffset = samplesPerSymbol*0.01; % Samples
+timingOffset = samplesPerSymbol*0.01 +.5; % Samples
 
 %% Generate symbols
 data = randi([0 modulationOrder-1], numSamples*2, 1);
@@ -67,11 +67,9 @@ pll = comm.SymbolSynchronizer(...
     'DetectorGain', 10, ...
     'TimingErrorDetector', 'Zero-Crossing (decision-directed)');
 
-evm = comm.EVM('MaximumEVMOutputPort',true,...
-    'XPercentileEVMOutputPort',true, 'XPercentileValue',90); % should have a reference constellation... 
-% rmsEVM = [];
-% maxEVM = [];
-% pctEVM = [];
+evm = comm.EVM('MaximumEVMOutputPort',true);
+   
+
 
 for k=1:frameSize:(numSamples)
     
@@ -91,7 +89,7 @@ for k=1:frameSize:(numSamples)
     filteredData = step(RxFlt, offsetData);
     filteredDataRef = real(step(RxFltRef, noisyData));
     pllData = pll(step(RxFltRef,noisyData));
-    
+    pllDataRef = real(pll(step(RxFltRef,noisyData)));
     
     % Visualize Error
     step(cdPre,filteredDataRef);
@@ -102,7 +100,8 @@ for k=1:frameSize:(numSamples)
     
 end
 
-[rmsEVM_1,maxEVM_1,pctEVM_1] = evm(filteredDataRef,filteredData)
-[rmsEVM_2,maxEVM_2,pctEVM_2] = evm(pllData)
+close all
+[rmsEVM_1,maxEVM_1] = evm(filteredDataRef,filteredData)
+[rmsEVM_2,maxEVM_2] = evm(pllDataRef, pllData)
 
 

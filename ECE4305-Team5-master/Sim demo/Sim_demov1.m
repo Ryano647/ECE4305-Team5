@@ -116,6 +116,7 @@ for k=1:frameSize:(numSamples)
     % Visualize Error
 %     step(cdPre,noisyData);step(cdPost,nFD);pause(0.01); %#ok<*UNRCH>
 end
+%% Visuals
 
 %testing
 t=1:sPS*frameSize;
@@ -127,14 +128,14 @@ plot(t, noisyData(1:sPS*frameSize));
 hold off;
 legend('TX','RX','NOISE');
 
-
-
-
+cdPre = comm.ConstellationDiagram('ReferenceConstellation', [-1 1],...
+    'Name','Baseband');
 
 %% PLL setup
 
 inputDataFull = filteredData;
 InputFrameLen = frameSize;
+
 %TED
 MaxOutputFrameLen = ceil(InputFrameLen*11/sPS/10);
 alpha = 0.5;
@@ -179,4 +180,97 @@ LoopFilter = dsp.IIRFilter( ...
     'Structure', 'Direct form II transposed', ...
     'Numerator', [1 0], 'Denominator', [1 -1]);
 
+for k=1:frameSize:(numSamples - frameSize)
 
+    timeIndex = (k:k+frameSize-1).';
+    inputData = inputDataFull(timeIndex); % Grab frame
+
+    %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % Call Synchronizer (sample by sample on frame)
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+    for i = 1 : InputFrameLen % Process input frame sample-by-sample
+
+        %% Using Trigger count as output input count
+        NumTrigger = NumTrigger + Trigger;
+
+        %% Interpolator
+        % Piecewise parabolic interpolator
+        release(filt);
+        % Update coefficents based on new Mu
+        intOut = step(filt,inputData(i),fliplr(b(Mu).'));
+
+        if Trigger % Interpolation output as symbols
+            SymbolHolder(NumTrigger) = intOut;
+        end
+
+        %% Timing error detector (TED)
+
+        % TED calculation occurs on a Trigger
+        if Trigger && all(~TriggerHistory(2:end))
+
+            % Calculate the midsample from interpolator output
+            t1 = TEDBuffer(end/2 + 1 - rem(SPS,2));
+            t2 = TEDBuffer(end/2 + 1);
+            midSample = (t1+t2)/2;
+            
+            % Data aided method
+            e = real(midSample) * (sign(real(TEDBuffer(1))) - sign(real(intOut))) + ...
+                imag(midSample) * (sign(imag(TEDBuffer(1))) - sign(imag(intOut)));
+        else
+            e = 0;
+        end
+
+        % Handle bit stuffing/skipping
+        switch sum([TriggerHistory(2:end), Trigger])
+            case 0
+                % No Trigger in awhile
+            case 1
+                % Update buffer (Normal)
+                TEDBuffer = [TEDBuffer(2:end), intOut];
+            otherwise % > 1
+                % Stuff condition
+                TEDBuffer = [TEDBuffer(3:end), 0, intOut];
+        end
+
+        %% Loop filter
+
+        v = LoopFilter(e*IntegratorGain);
+        v = e*ProportionalGain + v;
+
+        %% Interpolation controller
+
+        W = v + 1/SPS; % W should be small or == SPS when locked
+
+        TriggerHistory = [TriggerHistory(2:end), Trigger];
+
+        % Determine if we have an underflow, aka we are at the start edge
+        % of a sample
+        Trigger = (M1Counter < W);
+
+        % With a new underflow we must update interpolator coefficients
+        if Trigger
+            Mu = M1Counter / W;
+        end
+
+        % Update counter
+        M1Counter = mod(M1Counter - W, 1);
+
+    end
+
+    % Output 1 SPS
+    y = SymbolHolder(1:NumTrigger, 1);
+    timeCorrect(index:index+length(y)-1) = y;
+    index = index + length(y);
+
+end
+
+%% Remove zeros
+timeCorrect = timeCorrect(1:index-1);
+
+%% Visualize
+for k=1:frameSize:(index - frameSize)
+    
+    timeIndex = (k:k+frameSize-1).';
+    step(cdPre,timeCorrect(timeIndex));pause(0.01);
+end
