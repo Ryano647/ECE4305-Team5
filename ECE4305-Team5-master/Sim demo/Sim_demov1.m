@@ -179,6 +179,7 @@ buffer = [0 0 0];
 LoopFilter = dsp.IIRFilter( ...
     'Structure', 'Direct form II transposed', ...
     'Numerator', [1 0], 'Denominator', [1 -1]);
+NumTrigger  = 0;
 
 for k=1:frameSize:(numSamples - frameSize)
 
