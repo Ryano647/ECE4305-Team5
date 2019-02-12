@@ -4,7 +4,7 @@ clear all;
 sampleRateHz = 1e6; % Sample rate
 sPS = 2; %samples per symbols
 frameSize = 73;
-numFrames =10;
+numFrames =100;
 numSamples = numFrames*frameSize; % Samples to simulate
 modulationOrder = 2; %only 4 and 2
 filterSymbolSpan = 4;
@@ -67,7 +67,7 @@ RxFlt = comm.RaisedCosineReceiveFilter(...
     'DecimationFactor', 1) ;% Set to filterUpsample/2 when introducing timing estimation
 
 %% Frequency Distortion and AWGN setup
-noiseStrength = 0;
+noiseStrength = 3/5;
 freqShift = 2*10^2; 
 
 %% PLL setup
@@ -115,7 +115,6 @@ buffer = [0 0 0];
 LoopFilter = dsp.IIRFilter( ...
     'Structure', 'Direct form II transposed', ...
     'Numerator', [1 0], 'Denominator', [1 -1]);
-
 
 
 %% System loop

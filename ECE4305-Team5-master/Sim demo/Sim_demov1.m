@@ -1,5 +1,7 @@
 %% Tx system specs
-sampleRateHz = 1e6; % Sample rate
+sampleRateHz = 1e6; % Sample rate 
+%100e6/128 apparently
+
 sPS = 4; %samples per symbols
 frameSize = 20;
 numFrames = 3;
@@ -25,12 +27,12 @@ end
 encodedData = encodedData';
 %% Modulation
 if modulationOrder == 2
-    mod = comm.BPSKModulator();
-    modulatedData = mod.step(data);
+    mmod = comm.BPSKModulator();
+    modulatedData = mmod.step(data);
     demod = comm.BPSKDemodulator();
 else
-    mod = comm.QPSKModulator('BitInput', true);
-    modulatedData = mod.step(data);
+    mmod = comm.QPSKModulator('BitInput', true);
+    modulatedData = mmod.step(data);
     demod = comm.QPSKDemodulator();
 end
 %% Matched Filter Setup
@@ -117,7 +119,7 @@ for k=1:frameSize:(numSamples)
 %     step(cdPre,noisyData);step(cdPost,nFD);pause(0.01); %#ok<*UNRCH>
 end
 %% Visuals
-
+clear mod
 %testing
 t=1:sPS*frameSize;
 plot(t,allfilteredTXData(1:sPS*frameSize)); %filterSymbolSpan*sPS =starting point for rx filter output
@@ -211,7 +213,7 @@ for k=1:frameSize:(numSamples - frameSize)
         if Trigger && all(~TriggerHistory(2:end))
 
             % Calculate the midsample from interpolator output
-            t1 = TEDBuffer(end/2 + 1 - rem(SPS,2));
+            t1 = TEDBuffer(end/2 + 1 - rem(sPS,2));
             t2 = TEDBuffer(end/2 + 1);
             midSample = (t1+t2)/2;
             
@@ -241,7 +243,7 @@ for k=1:frameSize:(numSamples - frameSize)
 
         %% Interpolation controller
 
-        W = v + 1/SPS; % W should be small or == SPS when locked
+        W = v + 1/sPS; % W should be small or == SPS when locked
 
         TriggerHistory = [TriggerHistory(2:end), Trigger];
 
