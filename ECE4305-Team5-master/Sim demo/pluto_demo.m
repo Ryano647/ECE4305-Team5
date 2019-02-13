@@ -178,7 +178,7 @@ for k=1:frameSize:(numSamples)
 %     remainingSPS = sPS/decimation;
     
     % Filter signal
-    nFD = step(RxFlt, offsetData);
+    nFD = step(RxFlt, plutoData);
     if k== 1
     nFD = nFD(5:length(nFD));
     end
