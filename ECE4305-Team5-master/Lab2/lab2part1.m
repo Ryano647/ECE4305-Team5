@@ -39,7 +39,8 @@ for k=1:frameSize:numSamples*filterUpsample
 
     % Create phase accurate vector
     timeIndex = (k:k+frameSize-1).';
-    freqShift = exp(normalizedOffset*timeIndex + phaseOffset);
+    %freqShift = exp(normalizedOffset*timeIndex + phaseOffset);
+    freqShift = real(cos(normalizedOffset*timeIndex + phaseOffset) + 1i*sin(normalizedOffset*timeIndex + phaseOffset));
     
     % Offset data and maintain phase between frames
     offsetData(timeIndex) = (noisyData(timeIndex).*freqShift);
