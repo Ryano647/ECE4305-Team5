@@ -9,6 +9,7 @@ filterUpsample = 4; %original value 4
 filterSymbolSpan = 8;
 fftOrder = 2^10;
 
+
 %% Impairments
 snr = 15;
 frequencyOffsetHz = 1e5; % Offset in hertz
@@ -17,7 +18,7 @@ frequencyOffsetHz = (frequencyOffsetHz) * 1;
 
 %% Generate symbols
 data = randi([0 samplesPerSymbol], numSamples, 1);
-mod = comm.DBPSKModulator();
+mod = comm.QPSKModulator();
 modulatedData = mod.step(data);
 
 %% Add TX Filter
@@ -43,9 +44,11 @@ for k=1:frameSize:numSamples*filterUpsample
     timeIndex = (k:k+frameSize-1).';
     freqShift = exp(normalizedOffset*timeIndex + phaseOffset);
 %     freqShift = cos(normalizedOffset + phaseOffset);
+%     freqShift = exp(normalizedOffset*timeIndex.'); % textbook example
     
     % Offset data and maintain phase between frames
     offsetData(timeIndex) = (noisyData(timeIndex).*freqShift);
+%     offsetData = filteredData.*freqShift; % textbook example
  
     % Visualize Error
     step(sa,[noisyData(timeIndex),offsetData(timeIndex)]);pause(0.1); %#ok<*UNRCH>
