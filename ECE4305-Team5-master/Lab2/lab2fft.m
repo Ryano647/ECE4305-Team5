@@ -9,6 +9,21 @@ filterUpsample = 4; %original value 4
 filterSymbolSpan = 8;
 fftOrder = 2^10;
 fftIndex = 1;
+NormalizedLoopBandwidth = 0.9;
+DampingFactor = [0.9];
+
+%% Configure LF and PI
+LoopFilter = dsp.IIRFilter('Structure', 'Direct form II transposed', ...
+'Numerator', [1 0], 'Denominator', [1 -1]);
+Integrator = dsp.IIRFilter('Structure', 'Direct form II transposed', ...
+'Numerator', [0 1], 'Denominator', [1 -1]);
+
+%% Calculate range estimates
+    NormalizedPullInRange = min(1, 2*pi*sqrt(2)*DampingFactor*...
+    NormalizedLoopBandwidth);
+    MaxFrequencyLockDelay = (4*NormalizedPullInRange^2)/...
+        (NormalizedLoopBandwidth)^3;
+    MaxPhaseLockDelay = 1.3/(NormalizedLoopBandwidth);
 
 %% Impairments
 snr = 15;
@@ -18,7 +33,7 @@ frequencyOffsetHz = (frequencyOffsetHz) * 1;
 
 %% Generate symbols
 data = randi([0 samplesPerSymbol], numSamples, 1);
-mod = comm.DBPSKModulator();
+mod = comm.QPSKModulator();
 modulatedData = mod.step(data);
 
 %% Add TX Filter
@@ -31,6 +46,20 @@ noisyData = awgn(filteredData,snr);%,'measured');
 %% Setup visualization object(s)
 sa = dsp.SpectrumAnalyzer('SampleRate',sampleRateHz,'ShowLegend',true);
 
+%% Calculate coefficients for FFC
+    PhaseRecoveryLoopBandwidth = NormalizedLoopBandwidth*samplesPerSymbol;
+    PhaseRecoveryGain = samplesPerSymbol;
+    PhaseErrorDetectorGain = log2(4); DigitalSynthesizerGain = -1;
+    theta = PhaseRecoveryLoopBandwidth/...
+    ((DampingFactor + 0.25/DampingFactor)*samplesPerSymbol);
+    delta=1+ 2*DampingFactor*theta + theta*theta;
+    % G1
+    ProportionalGain = (4*DampingFactor*theta/delta)/...
+    (PhaseErrorDetectorGain*PhaseRecoveryGain);
+    % G3
+    IntegratorGain = (4/samplesPerSymbol*theta*theta/delta)/...
+    (PhaseErrorDetectorGain*PhaseRecoveryGain);
+
 %% Model of error
 % Add frequency offset to baseband signal
 
@@ -42,9 +71,15 @@ indexToHz = sampleRateHz/(modulationOrder*fftOrder);
 corrected = [];
 
  
-offsetData = zeros(size(noisyData));
-for k=1:frameSize:numSamples*filterUpsample
+Phase = 0; previousSample = complex(0);
+LoopFilter.release();Integrator.release();
 
+offsetData = zeros(size(noisyData));
+outputr = zeros(size(noisyData)); 
+state = 0;
+for k=1:frameSize:numSamples*filterUpsample
+    
+    LoopFilter.release();Integrator.release();
     % Create phase accurate vector
     timeIndex = (k:k+frameSize-1).';
     fftIndex = (k:k+fftOrder-1);
@@ -67,10 +102,32 @@ for k=1:frameSize:numSamples*filterUpsample
     % Convert to Hz from normalized frequency index
     offsetEstimates(k) = offsetInd * indexToHz;
     corrected = noisyData - offsetData;
+    % Complex phase shift
+    if k == 1 ||k == 2049
+    plz =corrected(timeIndex)';
+    output(timeIndex) = plz;
+    else
+    test = exp(1i*Phase);
+    output(timeIndex) = corrected(timeIndex);
+    end
+    % PED
+    phErr = sign(real(previousSample)).*imag(previousSample)...
+        - sign(imag(previousSample)).*real(previousSample);
+    % Loop Filter
+    loopFiltOut = step(LoopFilter,phErr*IntegratorGain);
+    % Direct Digital Synthesizer
+    DDSOut = step(Integrator,phErr*ProportionalGain + loopFiltOut);
+    Phase = DigitalSynthesizerGain * DDSOut;
+    previousSample = output(timeIndex);
     
-    % Visualize Error
-    step(sa,[noisyData(timeIndex),offsetData(timeIndex),corrected(timeIndex)]);pause(0.1); %#ok<*UNRCH>
+    if k ==1
+        output = output';
+    end
 
+    % Visualize Error
+    step(sa,[noisyData(timeIndex),output(timeIndex)]);pause(1); %#ok<*UNRCH>
+    
+    %,offsetData(timeIndex),corrected(timeIndex), 
 end
 %% Plot
 df = sampleRateHz/frameSize;
@@ -86,3 +143,20 @@ ylabel('PSD (dB)');
 legend('Original','Offset','Corrected','Location','Best');
 NumTicks = 5;L = h(1).Parent.XLim;
 set(h(1).Parent,'XTick',linspace(L(1),L(2),NumTicks))
+
+
+
+
+    % Complex phase shift
+%     output(timeIndex) = offsetData(timeIndex)*exp(1i*Phase);
+%     % PED
+%     phErr = sign(real(previousSample)).*imag(previousSample)...
+%         - sign(imag(previousSample)).*real(previousSample);
+%     % Loop Filter
+%     loopFiltOut = step(LoopFilter,phErr*IntegratorGain);
+%     % Direct Digital Synthesizer
+%     DDSOut = step(Integrator,phErr*ProportionalGain + loopFiltOut);
+%     Phase = DigitalSynthesizerGain * DDSOut;
+%     previousSample = output(timeIndex);
+
+%    outputr = output';
